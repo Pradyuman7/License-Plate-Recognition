@@ -1,5 +1,6 @@
 import argparse
 import os
+import cv2
 import Process_video
 
 
@@ -24,3 +25,7 @@ if __name__ == '__main__':
     file_path = args.file_path
     sample_frequency = args.sample_frequency
     Process_video.CaptureFrame_Process(file_path, sample_frequency, output_path)
+
+    # for file in os.listdir("./SameSizeLetters"):
+    #     imageLetter = cv2.imread("./SameSizeLetters/"+file)
+    #
