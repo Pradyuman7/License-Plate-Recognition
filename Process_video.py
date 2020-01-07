@@ -1,4 +1,6 @@
 import cv2
+import imutils
+
 import Recognize_help
 import numpy as np
 import math
@@ -205,14 +207,46 @@ def CaptureFrame_Process(file_path, sample_frequency, save_path):
                 # print(plateNumber, "found")
                 # cv2.imshow("frame_detected", frame)
 
-                temp.startcode(possiblePlate.Plate)
+                # temp.startcode(possiblePlate.Plate)
 
             number += 1
-            # plates = glob.glob("plates\\*.png")
-            # processed = glob.glob("processed\\*.png")
-            # resized = glob.glob("resized\\*.png")
-            # bordered = glob.glob("bordered\\*.png")
-            # work.work(plates, processed, resized, bordered)
+            cv2.imshow("plate", possiblePlate.Plate)
+            temp.find(possiblePlate.Plate)
+            # print(findNumber(possiblePlate.Plate))
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+def findNumber(plate):
+    gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(gray, 0, 255,
+                                cv2.THRESH_BINARY_INV +
+                                cv2.THRESH_OTSU)
+    cv2.imshow('image', thresh)
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    digitCnts = []
+
+    # loop over the digit area candidates
+    for c in cnts:
+        # compute the bounding box of the contour
+        (x, y, w, h) = cv2.boundingRect(c)
+
+        print(x,y,w,h)
+
+        # if the contour is sufficiently large, it must be a digit
+        if w >= 15 and (h >= 30 and h <= 40):
+            digitCnts.append(c)
+
+    for c in digitCnts:
+        # extract the digit ROI
+        (x, y, w, h) = cv2.boundingRect(c)
+        roi = thresh[y:y + h, x:x + w]
+
+        # compute the width and height of each of the 7 segments
+        # we are going to examine
+        (roiH, roiW) = roi.shape
+        (dW, dH) = (int(roiW * 0.25), int(roiH * 0.15))
+        dHC = int(roiH * 0.05)

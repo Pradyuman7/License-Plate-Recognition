@@ -2,7 +2,7 @@ import argparse
 import os
 import cv2
 import Process_video
-
+import ProcessVideo
 
 # define the required arguments: video path(file_path), sample frequency(second), saving path for final result table
 # for more information of 'argparse' module, see https://docs.python.org/3/library/argparse.html
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     file_path = args.file_path
     sample_frequency = args.sample_frequency
     Process_video.CaptureFrame_Process(file_path, sample_frequency, output_path)
-
+    # ProcessVideo.CaptureFrame_Process(file_path, sample_frequency, output_path)
     # for file in os.listdir("./SameSizeLetters"):
     #     imageLetter = cv2.imread("./SameSizeLetters/"+file)
     #
