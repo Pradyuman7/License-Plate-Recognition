@@ -1,11 +1,14 @@
 import cv2
 import imutils
+from PIL import Image
+import os
+import find_simple
 
 import Recognize_help
 import numpy as np
 import math
 import work
-import temp
+import find_tesseract
 
 """
 In this file, you will define your own CaptureFrame_Process funtion. In this function,
@@ -29,9 +32,9 @@ def matchingChars(possibleC, possibleChars):
         if possibleMatchingChar == possibleC:
             continue
 
-        distanceBetweenChars = Recognize_help.distanceBetweenChars(possibleC, possibleMatchingChar)
+        distanceBetweenChars = Recognize_help.distanceBetweenCharacters(possibleC, possibleMatchingChar)
 
-        angleBetweenChars = Recognize_help.angleBetweenChars(possibleC, possibleMatchingChar)
+        angleBetweenChars = Recognize_help.angleBetweenCharacters(possibleC, possibleMatchingChar)
 
         changeInArea = float(abs(possibleMatchingChar.boundingRectArea - possibleC.boundingRectArea)) / float(
             possibleC.boundingRectArea)
@@ -89,90 +92,89 @@ def CaptureFrame_Process(file_path, sample_frequency, save_path):
         height, width = thresh.shape
         imageContours = np.zeros((height, width, 3), dtype=np.uint8)
 
-        possibleChars = []
-        ctrs = []
+        characters = []
+        contours_first = []
         plates_list = []
-        listOfListsOfMatchingChars = []
-        countOfPossibleChars = 0
+        list_of_list = []
+        number_of_characters = 0
 
         for i in range(0, len(contours)):
             cv2.drawContours(imageContours, contours, i, (255, 255, 255))
 
-            possibleChar = Recognize_help.ifChar(contours[i])
+            character = Recognize_help.Character(contours[i])
 
-            if Recognize_help.checkIfChar(possibleChar) is True:
-                countOfPossibleChars += 1
-                possibleChars.append(possibleChar)
+            if Recognize_help.isThisACharacter(character) is True:
+                number_of_characters += 1
+                characters.append(character)
 
         imageContours = np.zeros((height, width, 3), np.uint8)
 
-        for char in possibleChars:
-            ctrs.append(char.contour)
+        for char in characters:
+            contours_first.append(char.contour)
 
-        cv2.drawContours(imageContours, ctrs, -1, (255, 255, 255))
+        cv2.drawContours(imageContours, contours_first, -1, (255, 255, 255))
 
-        for possibleC in possibleChars:
-            listOfMatchingChars = matchingChars(possibleC, possibleChars)
+        for possibleC in characters:
+            list_of_match = matchingChars(possibleC, characters)
 
-            listOfMatchingChars.append(possibleC)
-            if len(listOfMatchingChars) < 3:
+            list_of_match.append(possibleC)
+            if len(list_of_match) < 3:
                 continue
 
-            listOfListsOfMatchingChars.append(listOfMatchingChars)
+            list_of_list.append(list_of_match)
             # listOfPossibleCharsWithCurrentMatchesRemoved = list(set(possibleChars) - set(listOfMatchingChars))
 
             recursiveListOfListsOfMatchingChars = []
 
             for recursiveListOfMatchingChars in recursiveListOfListsOfMatchingChars:
-                listOfListsOfMatchingChars.append(recursiveListOfMatchingChars)
+                list_of_list.append(recursiveListOfMatchingChars)
 
             break
 
         imageContours = np.zeros((height, width, 3), np.uint8)
 
-        for listOfMatchingChars in listOfListsOfMatchingChars:
+        for list_of_match in list_of_list:
             contoursColor = (255, 0, 255)
 
             contours = []
 
-            for matchingChar in listOfMatchingChars:
+            for matchingChar in list_of_match:
                 contours.append(matchingChar.contour)
 
             cv2.drawContours(imageContours, contours, -1, contoursColor)
 
-        for listOfMatchingChars in listOfListsOfMatchingChars:
-            possiblePlate = Recognize_help.PossiblePlate()
+        for list_of_match in list_of_list:
+            plate = Recognize_help.LicensePlate()
 
-            listOfMatchingChars.sort(key=lambda matchingChar: matchingChar.centerX)
+            list_of_match.sort(key=lambda matchingChar: matchingChar.centerX)
 
-            plateCenterX = (listOfMatchingChars[0].centerX + listOfMatchingChars[
-                len(listOfMatchingChars) - 1].centerX) / 2.0
-            plateCenterY = (listOfMatchingChars[0].centerY + listOfMatchingChars[
-                len(listOfMatchingChars) - 1].centerY) / 2.0
+            plateCenterX = (list_of_match[0].centerX + list_of_match[
+                len(list_of_match) - 1].centerX) / 2.0
+            plateCenterY = (list_of_match[0].centerY + list_of_match[
+                len(list_of_match) - 1].centerY) / 2.0
 
             plateCenter = plateCenterX, plateCenterY
 
-            plateWidth = int((listOfMatchingChars[len(listOfMatchingChars) - 1].boundingRectX + listOfMatchingChars[
-                len(listOfMatchingChars) - 1].boundingRectWidth - listOfMatchingChars[0].boundingRectX) * 1.3)
+            plateWidth = int((list_of_match[len(list_of_match) - 1].boundingRectX + list_of_match[
+                len(list_of_match) - 1].boundingRectWidth - list_of_match[0].boundingRectX) * 1.3)
 
-            totalOfCharHeights = 0
+            total_character_height = 0
 
-            for matchingChar in listOfMatchingChars:
-                totalOfCharHeights = totalOfCharHeights + matchingChar.boundingRectHeight
+            for matchingChar in list_of_match:
+                total_character_height = total_character_height + matchingChar.boundingRectHeight
 
-            averageCharHeight = totalOfCharHeights / len(listOfMatchingChars)
+            averageCharHeight = total_character_height / len(list_of_match)
 
             plateHeight = int(averageCharHeight * 1.5)
 
-            opposite = listOfMatchingChars[len(listOfMatchingChars) - 1].centerY - listOfMatchingChars[0].centerY
+            opposite = list_of_match[len(list_of_match) - 1].centerY - list_of_match[0].centerY
 
-            hypotenuse = Recognize_help.distanceBetweenChars(listOfMatchingChars[0],
-                                                             listOfMatchingChars[len(listOfMatchingChars) - 1])
+            hypotenuse = Recognize_help.distanceBetweenCharacters(list_of_match[0],
+                                                                  list_of_match[len(list_of_match) - 1])
             correctionAngleInRad = math.asin(opposite / hypotenuse)
             correctionAngleInDeg = correctionAngleInRad * (180.0 / math.pi)
 
-            possiblePlate.rrLocationOfPlateInScene = (
-                tuple(plateCenter), (plateWidth, plateHeight), correctionAngleInDeg)
+            plate.locationOfPlate = (tuple(plateCenter), (plateWidth, plateHeight), correctionAngleInDeg)
 
             rotationMatrix = cv2.getRotationMatrix2D(tuple(plateCenter), correctionAngleInDeg, 1.0)
 
@@ -180,13 +182,15 @@ def CaptureFrame_Process(file_path, sample_frequency, save_path):
 
             imgRotated = cv2.warpAffine(frame, rotationMatrix, (width, height))
             imgCropped = cv2.getRectSubPix(imgRotated, (plateWidth, plateHeight), tuple(plateCenter))
-            possiblePlate.Plate = imgCropped
+            plate.Plate = imgCropped
 
-            if possiblePlate.Plate is not None:
-                plates_list.append(possiblePlate)
+            plate.chars = list_of_match
+
+            if plate.Plate is not None:
+                plates_list.append(plate)
 
             for i in range(0, len(plates_list)):
-                p2fRectPoints = cv2.boxPoints(plates_list[i].rrLocationOfPlateInScene)
+                p2fRectPoints = cv2.boxPoints(plates_list[i].locationOfPlate)
 
                 rectColour = (255, 0, 0)
 
@@ -200,53 +204,46 @@ def CaptureFrame_Process(file_path, sample_frequency, save_path):
                 cv2.line(frame, tuple(p2fRectPoints[2]), tuple(p2fRectPoints[3]), rectColour, 2)
                 cv2.line(frame, tuple(p2fRectPoints[3]), tuple(p2fRectPoints[0]), rectColour, 2)
 
-                # cv2.imshow("detected", imageContours)
-                # cv2.imwrite(temp_folder + '11 - detected.png', imageContours)
-
-                # plateNumber = work.show(possiblePlate.Plate)
-                # print(plateNumber, "found")
-                # cv2.imshow("frame_detected", frame)
-
-                # temp.startcode(possiblePlate.Plate)
+                # cv2.imshow("plate", plate.Plate)
+                # temp.find(possiblePlate.Plate)
+                # findNumber(plate)
+                find_simple.find(plate.Plate)
 
             number += 1
-            cv2.imshow("plate", possiblePlate.Plate)
-            temp.find(possiblePlate.Plate)
-            # print(findNumber(possiblePlate.Plate))
 
     cap.release()
     cv2.destroyAllWindows()
 
 
+def find_matches(small_image, large_image):
+    method = cv2.TM_SQDIFF_NORMED
+
+    result = cv2.matchTemplate(small_image, large_image, method)
+
+    # We want the minimum squared difference
+    mn, _, mnLoc, _ = cv2.minMaxLoc(result)
+
+    # Draw the rectangle:
+    # Extract the coordinates of our best match
+    MPx, MPy = mnLoc
+
+    # Step 2: Get the size of the template. This is the same size as the match.
+    trows, tcols = small_image.shape[:2]
+
+    # Step 3: Draw the rectangle on large_image
+    cv2.rectangle(large_image, (MPx, MPy), (MPx + tcols, MPy + trows), (0, 0, 255), 2)
+
+    # Display the original image with the rectangle around the match.
+    cv2.imshow('output', large_image)
+
+    # The image is only displayed if we call this
+    cv2.waitKey(0)
+
+
 def findNumber(plate):
-    gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(gray, 0, 255,
-                                cv2.THRESH_BINARY_INV +
-                                cv2.THRESH_OTSU)
-    cv2.imshow('image', thresh)
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-                            cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
-    digitCnts = []
+    path = "/Users/pradyuman.dixit/Desktop/Students_upload/characters-2"
+    images = os.listdir(path)
 
-    # loop over the digit area candidates
-    for c in cnts:
-        # compute the bounding box of the contour
-        (x, y, w, h) = cv2.boundingRect(c)
-
-        print(x,y,w,h)
-
-        # if the contour is sufficiently large, it must be a digit
-        if w >= 15 and (h >= 30 and h <= 40):
-            digitCnts.append(c)
-
-    for c in digitCnts:
-        # extract the digit ROI
-        (x, y, w, h) = cv2.boundingRect(c)
-        roi = thresh[y:y + h, x:x + w]
-
-        # compute the width and height of each of the 7 segments
-        # we are going to examine
-        (roiH, roiW) = roi.shape
-        (dW, dH) = (int(roiW * 0.25), int(roiH * 0.15))
-        dHC = int(roiH * 0.05)
+    for im in images:
+        tempImage = cv2.imread(path + "/" + im)
+        find_matches(tempImage, plate.Plate)

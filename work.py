@@ -4,7 +4,7 @@ import os
 from imutils import contours
 
 
-# python3 main.py --file_path '/Users/pradyuman.dixit/Desktop/Students_upload/trainingsvideo.avi'
+# python3 start.py --file_path '/Users/pradyuman.dixit/Desktop/Students_upload/trainingsvideo.avi'
 
 # def work(image):
 #     mask = np.zeros(image.shape, dtype=np.uint8)

@@ -2,24 +2,8 @@ import cv2
 import math
 import os
 
-"""
-In this file, you need to define plate_detection function.
-To do:
-	1. Localize the plates and crop the plates
-	2. Adjust the cropped plate images
-Inputs:(One)
-	1. image: captured frame in CaptureFrame_Process.CaptureFrame_Process function
-	type: Numpy array (imread by OpenCV package)
-Outputs:(One)
-	1. plate_imgs: cropped and adjusted plate images
-	type: list, each element in 'plate_imgs' is the cropped image(Numpy array)
-Hints:
-	1. You may need to define other functions, such as crop and adjust function
-	2. You may need to define two ways for localizing plates(yellow or other colors)
-"""
 
-
-class ifChar:
+class Character:
 
     def __init__(self, cntr):
         self.contour = cntr
@@ -43,35 +27,31 @@ class ifChar:
         self.aspectRatio = float(self.boundingRectWidth) / float(self.boundingRectHeight)
 
 
-class PossiblePlate:
+class LicensePlate:
 
     def __init__(self):
         self.Plate = None
         self.Grayscale = None
         self.Thresh = None
 
-        self.rrLocationOfPlateInScene = None
+        self.locationOfPlate = None
 
-        self.strChars = ""
-
-
-def checkIfChar(possibleChar):
-    if (possibleChar.boundingRectArea > 80 and possibleChar.boundingRectWidth > 2
-            and possibleChar.boundingRectHeight > 8 and 0.25 < possibleChar.aspectRatio < 1.0):
-
-        return True
-    else:
-        return False
+        self.chars = None
 
 
-def distanceBetweenChars(firstChar, secondChar):
+def isThisACharacter(possibleChar):
+    return ((possibleChar.boundingRectArea > 80 and possibleChar.boundingRectWidth > 2)
+            and (possibleChar.boundingRectHeight > 8 and 0.25 < possibleChar.aspectRatio < 1.0))
+
+
+def distanceBetweenCharacters(firstChar, secondChar):
     x = abs(firstChar.centerX - secondChar.centerX)
     y = abs(firstChar.centerY - secondChar.centerY)
 
     return math.sqrt((x ** 2) + (y ** 2))
 
 
-def angleBetweenChars(firstChar, secondChar):
+def angleBetweenCharacters(firstChar, secondChar):
     adjacent = float(abs(firstChar.centerX - secondChar.centerX))
     opposite = float(abs(firstChar.centerY - secondChar.centerY))
 
