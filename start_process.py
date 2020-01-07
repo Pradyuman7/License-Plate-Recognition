@@ -2,6 +2,7 @@ import cv2
 import localization
 import recognize
 import help_functions
+import pandas as pd
 
 
 def work_on_frame(image):
@@ -47,9 +48,13 @@ def start_video(file_path, sample_frequency, output_path):
             break
 
         plates_found.append([work_on_frame(frame), param, param / fps])
-        param += 24
 
+        df = pd.DataFrame(plates_found, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
+        df.to_csv('record.csv', index=None)
+
+        param += 24
         cv2.imshow("image", frame)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, param)
 
     print(plates_found)
     cap.release()

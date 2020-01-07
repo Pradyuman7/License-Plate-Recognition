@@ -45,7 +45,7 @@ def segmentation(image, bounds):
         # filename = "Characters/character_" + str(i) + ".jpg"
         character_image = image[:, bounds[i]:bounds[i + 1]]
         # cv2.imwrite(filename, character_image)
-        plate_number = plate_number + recognize_character(character_image)
+        plate_number += recognize_character(character_image)
 
     return plate_number
 
@@ -110,7 +110,7 @@ def recognize_character(image):
     score[27] = max(intermediate_score)
     intermediate_score.clear()
 
-    # print("Character: ", characters[str(np.argmax(score))])
+    print("Character: ", characters[str(np.argmax(score))])
     return characters[str(np.argmax(score))]
 
 
