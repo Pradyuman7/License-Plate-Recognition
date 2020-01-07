@@ -23,8 +23,8 @@ def rectangle(coords):
     return rect
 
 
-def four_point_transform(image, pts):
-    rect = rectangle(pts)
+def four_point_transform(image, coords):
+    rect = rectangle(coords)
     (tl, tr, br, bl) = rect
 
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -59,5 +59,5 @@ def find_plate_in_frame(image, contours):
 
     # Finds the minimal rectangle that bounds the contour
     if len(contour) == 0:
-        return 0
+        return
     return four_point_transform(image, contour[0])

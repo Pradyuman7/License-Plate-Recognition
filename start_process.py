@@ -22,6 +22,9 @@ def work_on_frame(image):
     plate = localization.find_plate_in_frame(gray, contours)
     # cv2.imshow('Plate image', plate_image)
 
+    if plate is None:
+        return
+
     plate = cv2.resize(plate, (int(plate.shape[1] * (85 / plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
     # cv2.imshow('Resized plate', plate_image)
 
@@ -48,6 +51,7 @@ def start_video(file_path, sample_frequency, output_path):
 
         cv2.imshow("image", frame)
 
+    print(plates_found)
     cap.release()
     cv2.destroyAllWindows()
 

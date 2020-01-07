@@ -42,9 +42,9 @@ def segmentation(image, bounds):
     plate_number = ""
 
     for i in range(N - 1):
-        filename = "Characters/character_" + str(i) + ".jpg"
+        # filename = "Characters/character_" + str(i) + ".jpg"
         character_image = image[:, bounds[i]:bounds[i + 1]]
-        cv2.imwrite(filename, character_image)
+        # cv2.imwrite(filename, character_image)
         plate_number = plate_number + recognize_character(character_image)
 
     return plate_number

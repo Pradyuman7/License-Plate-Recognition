@@ -1,6 +1,6 @@
 import argparse
 import os
-import start_Process
+import start_process
 
 
 # define the required arguments: video path(file_path), sample frequency(second), saving path for final result table
@@ -23,4 +23,4 @@ if __name__ == '__main__':
         output_path = args.output_path
     file_path = args.file_path
     sample_frequency = args.sample_frequency
-    start_Process.start_video(file_path, sample_frequency, output_path)
+    start_process.start_video(file_path, sample_frequency, output_path)
