@@ -51,7 +51,7 @@ def isodata_threshold(img):
         hist = hist[:120]
         t = [60]
         i = 0
-        ep = 1
+        # ep = 1
 
         gi = np.arange(0, t[0])
         gs = np.arange(t[0], 120)
@@ -62,7 +62,7 @@ def isodata_threshold(img):
         t.append(int(np.average([m1, m2])))
         i = 1
 
-        while np.abs(t[i - 1] - t[i]) > ep:
+        while np.abs(t[i - 1] - t[i]) > 1:
             gi = np.arange(0, t[i])
             gs = np.arange(t[i], 120)
             m1 = np.average(gi, weights=hist[:t[i]])
@@ -73,7 +73,7 @@ def isodata_threshold(img):
         # print("threshold is : ", t[i])
         return t[i]
     except ZeroDivisionError:
-        return 1
+        return 0
 
 
 def search_boundary_1(hp, T):

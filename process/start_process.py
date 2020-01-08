@@ -51,7 +51,7 @@ def start_video(file_path, sample_frequency, output_path):
         data_frame = pd.DataFrame(plates_found, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
         data_frame.to_csv('record.csv', index=None)
 
-        speed += 12
+        speed += 1
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
         # cv2.imshow("original_frame", frame)

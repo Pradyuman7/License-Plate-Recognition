@@ -37,7 +37,9 @@ def recognize_character(image):
 
         for j in range(character.shape[1] - width - 1):
             temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, j:j + width], image)))
-            list_of_score.append(temp / coef)
+
+            if temp is not None:
+                list_of_score.append(temp / coef)
 
         if len(list_of_score) != 0:
             score[i - 1] = max(list_of_score)
@@ -49,7 +51,9 @@ def recognize_character(image):
 
         for j in range(character.shape[1] - width - 1):
             temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, j:j + width], image)))
-            list_of_score.append(temp / coef)
+
+            if temp is not None:
+                list_of_score.append(temp / coef)
 
         if len(list_of_score) != 0:
             score[17 + i] = max(list_of_score)
