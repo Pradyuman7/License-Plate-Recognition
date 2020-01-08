@@ -32,7 +32,7 @@ def recognize_character(image):
     list_of_score = []
 
     for i in range(1, 18):
-        character = cv2.imread("SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
+        character = cv2.imread("data/SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
         coef = character.shape[0] * width * 255
 
         for j in range(character.shape[1] - width - 1):
@@ -46,7 +46,7 @@ def recognize_character(image):
             list_of_score = []
 
     for i in range(10):
-        character = cv2.imread("SameSizeNumbers/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
+        character = cv2.imread("data/SameSizeNumbers/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
         coef = character.shape[0] * width * 255
 
         for j in range(character.shape[1] - width - 1):
