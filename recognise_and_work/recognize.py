@@ -18,46 +18,37 @@ def recognize_character(image):
     score = np.zeros(28)
     list_of_score = []
 
-    for i in range(17):
-        character = cv2.imread("SameSizeLetters/" + str(i + 1) + ".bmp", cv2.IMREAD_GRAYSCALE)
+    for i in range(1, 18):
+        character = cv2.imread("SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
         coef = character.shape[0] * width * 255
 
         for start in range(character.shape[1] - width - 1):
             temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, start:start + width], image)))
+            list_of_score.append(temp / coef)
 
-            if temp is not None:
-                list_of_score.append(temp / coef)
-
-        if len(list_of_score) == 0:
-            continue
-
-        score[i] = max(list_of_score)
-        list_of_score = []
+        if len(list_of_score) != 0:
+            score[i - 1] = max(list_of_score)
+            list_of_score = []
 
     for i in range(10):
         character = cv2.imread("SameSizeNumbers/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        coef = character.shape[0] * character.shape[1] * 255
+        coef = character.shape[0] * width * 255
 
         for start in range(character.shape[1] - width - 1):
             temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, start:start + width], image)))
+            list_of_score.append(temp / coef)
 
-            if temp is not None:
-                list_of_score.append(temp / coef)
-
-        if len(list_of_score) == 0:
-            continue
-
-        score[17 + i] = max(list_of_score)
-        list_of_score = []
+        if len(list_of_score) != 0:
+            score[17 + i] = max(list_of_score)
+            list_of_score = []
 
     character = blank_characters(image.shape, 10, 20)
-    coef = character.shape[0] * character.shape[1] * 255
+    coef = character.shape[0] * width * 255
 
     for start in range(character.shape[1] - width - 1):
         temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, start:start + width], image)))
 
-        if temp is not None:
-            list_of_score.append(temp / coef)
+        list_of_score.append(temp / coef)
 
     if len(list_of_score) != 0:
         score[27] = max(list_of_score)
