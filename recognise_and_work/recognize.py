@@ -14,13 +14,16 @@ def form_plate_number(image, bounds):
         plate_number += recognize_character(image[:, bounds[i]:bounds[i + 1]])
 
     if plate_number.startswith('H') and plate_number.endswith('H'):
-        return plate_number[1:-1]
+        plate_number = plate_number[1:-1]
+        return plate_number.replace('H', '-')
     elif plate_number.startswith('H'):
-        return plate_number[1:]
+        plate_number = plate_number[1:]
+        return plate_number.replace('H', '-')
     elif plate_number.endswith('H'):
-        return plate_number[:-1]
+        plate_number = plate_number[:-1]
+        return plate_number.replace('H', '-')
     else:
-        return plate_number
+        return plate_number.replace('H', '-')
 
 
 def recognize_character(image):
