@@ -51,7 +51,7 @@ def isodata_threshold(img):
         hist = hist[:120]
         t = [60]
         i = 0
-        ep = 0.6
+        ep = 1
 
         gi = np.arange(0, t[0])
         gs = np.arange(t[0], 120)
