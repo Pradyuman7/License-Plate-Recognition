@@ -3,13 +3,12 @@ import numpy as np
 from helpers import functions
 
 
-def segmentation(image, bounds):
+def form_plate_number(image, bounds):
     N = len(bounds)
     plate_number = ""
 
     for i in range(N - 1):
-        character_image = image[:, bounds[i]:bounds[i + 1]]
-        plate_number += recognize_character(character_image)
+        plate_number += recognize_character(image[:, bounds[i]:bounds[i + 1]])
 
     return plate_number
 
@@ -106,4 +105,6 @@ def recognition(plate):
         plate = cv2.line(plate, (0, h - i), (w, h - i), (160, 0, 0), 1)
 
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_BGR2GRAY)
-    return segmentation(new_plate, hori_end)
+
+    cv2.imshow("plate", new_plate)
+    return form_plate_number(new_plate, hori_end)
