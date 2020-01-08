@@ -39,17 +39,16 @@ def four_point_transform(image, coords):
 
 def find_plate_in_frame(image, contours):
     contour = []
-    i = 0
     for c in contours:
         rect = cv2.minAreaRect(c)
         box = cv2.boxPoints(rect)
         box = np.int0(box)
         area = cv2.contourArea(box)
 
-        if area > 2500:  # area < 2800
+        if area > 2500:
             contour.append(box)
 
     # Finds the minimal rectangle that bounds the contour
     if len(contour) == 0:
-        return
+        return image
     return four_point_transform(image, contour[0])
