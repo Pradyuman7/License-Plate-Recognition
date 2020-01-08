@@ -63,7 +63,7 @@ def recognize_character(image):
 
 
 def recognition(plate):
-    plate = functions.remove_borders(plate, (13, 13))
+    plate = functions.clear_border(plate, (13, 13))
 
     hori = np.sum(plate, axis=1)
     verti_end = functions.search_boundary_1(hori, 1000)

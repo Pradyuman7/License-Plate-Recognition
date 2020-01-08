@@ -33,14 +33,14 @@ valuees = {
 }
 
 
-def remove_borders(plate, ep):
-    height = plate.shape[0]
-    width = plate.shape[1]
+def clear_border(plate, ep):
+    h = plate.shape[0]
+    w = plate.shape[1]
 
     plate[0:ep[0], :] = 0
-    plate[height - ep[0]:height, :] = 0
+    plate[h - ep[0]:h, :] = 0
     plate[:, 0:ep[1]] = 0
-    plate[:, width - ep[1]:width] = 0
+    plate[:, w - ep[1]:w] = 0
 
     return plate
 
@@ -79,6 +79,7 @@ def isodata_threshold(img):
 def search_boundary_1(hp, T):
     N = len(hp)
     i = 0
+
     while ~((hp[i] <= T) & (hp[i + 1] > T)) & (i < int(N / 2)):
         i += 1
 
@@ -94,10 +95,10 @@ def search_boundary_1(hp, T):
 
 def search_boundary_2(proj):
     N = len(proj)
-    bool_bounds = (proj >= 255)
     start = 0
     end = 1
     bounds = []
+    bool_bounds = (proj >= 255)
 
     for b in range(N - 1):
         if bool_bounds[end] & ~bool_bounds[start]:
