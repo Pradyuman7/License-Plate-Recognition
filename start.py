@@ -1,6 +1,6 @@
 import argparse
 import os
-import start_process
+from process import start_process
 
 
 # define the required arguments: video path(file_path), sample frequency(second), saving path for final result table

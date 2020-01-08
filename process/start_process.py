@@ -1,7 +1,6 @@
 import cv2
-import localization
-import recognize
-import help_functions
+from recognise_and_work import recognize, localization
+from helpers import functions
 import pandas as pd
 
 
@@ -21,15 +20,13 @@ def work_on_frame(image):
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     plate = localization.find_plate_in_frame(gray, contours)
-    # cv2.imshow('Plate image', plate_image)
 
     if plate is None:
         return
 
     plate = cv2.resize(plate, (int(plate.shape[1] * (85 / plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
-    # cv2.imshow('Resized plate', plate_image)
 
-    thresh = help_functions.isodata_threshold(plate)
+    thresh = functions.isodata_threshold(plate)
 
     return recognize.recognition(cv2.threshold(plate, thresh, 255, cv2.THRESH_BINARY_INV)[1])
 
@@ -37,9 +34,9 @@ def work_on_frame(image):
 def start_video(file_path, sample_frequency, output_path):
     cap = cv2.VideoCapture(file_path)
     fps = 12
-    param = 0
+    speed = 0
     plates_found = []
-    cap.set(cv2.CAP_PROP_POS_FRAMES, param)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
 
     while True:
         flag, frame = cap.read()
@@ -47,17 +44,22 @@ def start_video(file_path, sample_frequency, output_path):
         if (not flag) or (cv2.waitKey(1) & 0xFF == ord('q')):
             break
 
-        plates_found.append([work_on_frame(frame), param, param / fps])
+        plates_found.append([work_on_frame(frame), speed, speed / fps])
 
-        df = pd.DataFrame(plates_found, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
-        df.to_csv('record.csv', index=None)
+        data_frame = pd.DataFrame(plates_found, columns=['License', 'Frame', 'Timestamp(seconds)'])
+        data_frame.to_csv('record.csv', index=None)
 
-        param += 24
-        cv2.imshow("image", frame)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, param)
+        speed += 12
 
-    print(plates_found)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
+        cv2.imshow("original_frame", frame)
+
+    show_plates(plates_found)
+
     cap.release()
     cv2.destroyAllWindows()
 
 
+def show_plates(plates):
+    for plate in plates:
+        print(plate)

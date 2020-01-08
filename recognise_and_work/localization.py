@@ -2,13 +2,6 @@ import cv2
 import numpy as np
 
 
-def check_number_platee(box):
-    width = box[3][0] - box[0][0]
-    # height = box[0][0] - box[0][1]
-    # aspect_ratio = width / height
-    return width > 100
-
-
 def rectangle(coords):
     rect = np.zeros((4, 2), dtype="float32")
 
@@ -42,7 +35,6 @@ def four_point_transform(image, coords):
         [0, maxHeight - 1]], dtype="float32")
 
     return cv2.warpPerspective(image, cv2.getPerspectiveTransform(rect, dst), (maxWidth, maxHeight))
-    # cv2.imshow('Localized', image)
 
 
 def find_plate_in_frame(image, contours):
