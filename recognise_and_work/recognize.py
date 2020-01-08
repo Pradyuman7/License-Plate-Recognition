@@ -55,33 +55,7 @@ def recognize_character(image):
             score[17 + i] = max(list_of_score)
             list_of_score = []
 
-    character = blank_characters(image.shape, 10, 20)
-    coef = character.shape[0] * width * 255
-
-    for j in range(character.shape[1] - width - 1):
-        temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, j:j + width], image)))
-
-        list_of_score.append(temp / coef)
-
-    if len(list_of_score) != 0:
-        score[27] = max(list_of_score)
-
     return functions.valuees[str(np.argmax(score))]
-
-
-def blank_characters(img_shape, bar_thickness, bar_width):
-    ch_height = img_shape[0]
-    ch_width = img_shape[1] + 20
-
-    bar = np.zeros((ch_height, ch_width), np.uint8)
-    bart_init = int(ch_height / 2) - int(bar_thickness / 2)
-
-    bart_end = bart_init + bar_thickness
-    barw_init = int(ch_width / 2) - int(bar_width / 2)
-    barw_end = barw_init + bar_width
-
-    bar[bart_init:bart_end, barw_init:barw_end] = 255 * np.ones([bar_thickness, bar_width])
-    return bar
 
 
 def recognition(plate):
