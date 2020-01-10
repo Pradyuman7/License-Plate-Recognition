@@ -5,18 +5,60 @@ import pandas as pd
 
 
 def work_on_frame(image):
+    # blur the image to make all colors of the frame uniform
     blur = cv2.GaussianBlur(image, (3, 3), 0)
+    # hue, saturation, value model, used to select various different colors needed for a particular picture
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
+    # GaussianBlur :
+
+    # find only yellow parts of the image, [10,65,40] upto [35,355,215]
     mask = cv2.inRange(hsv, (10, 65, 40), (35, 255, 215))
     bit_mast = cv2.bitwise_and(image, image, mask=mask)
+
+    # bitwise_and : calculates the per-element bit-wise logical conjunction
+    # Two arrays when src1 and src2 have the same size:
+    # dst[i] = scr1[i] ^ scr2[i] if mask[i] != 0
+
+    # inRange : Checks if array elements lie between the elements of two other arrays.
+    # params, src is first input array, lower-bound inclusive, upper bound inclusive
+    # return dst where dst[i[ = low[i] <= src[i] <= up[i]
+
+    # convert hsv to gray
     gray = cv2.cvtColor(bit_mast, cv2.COLOR_BGR2GRAY)
 
+    # binarisation of the image
     (thresh, binary) = cv2.threshold(gray, 62, 255, cv2.THRESH_BINARY)
+
+    # threshold : Applies a fixed-level threshold to each array element.
+    # params, src, threshold value, max value
+    # for thresh_binary :
+    # dst(x,y) = max_val if src(x,y) >  thresh else 0
+
+    # edge detection using canny algorithm
     canny_edges = cv2.Canny(binary, 50, 100)
 
-    # opencv 4 has two in return
+    # Canny : Finds edges in an image using the [Canny86] algorithm.
+    # params, image, thesh_1, thresh_2
+    # The smallest value between threshold1 and threshold2 is used for edge linking.
+    # The largest value is used to find initial segments of strong edges.
+    # canny algorithm works as following :
+    # Apply Gaussian filter to smooth the image in order to remove the noise
+    # Find the intensity gradients of the image
+    # Apply non-maximum suppression to get rid of spurious response to edge detection
+    # Apply double threshold to determine potential edges
+    # Track edge by hysteresis: Finalize the detection of edges by suppressing all the other edges
+    # that are weak and not connected to strong edges.
+
+    # find contours of the image
     contours, _ = cv2.findContours(canny_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+    # findContours : Finds contours in a binary image.
+    # params, image, mode, method
+    # retr_tree retrieves all of the contours and reconstructs a full hierarchy of nested contours
+    # chain_approx_nonde stores absolutely all the contour points. That is, any 2 subsequent points
+    # (x1,y1) and (x2,y2) of the contour will be either horizontal, vertical or diagonal neighbors,
+    # that is, max(abs(x1-x2),abs(y2-y1))==1.
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     plate = localization.find_plate_in_frame(gray, contours)
@@ -25,6 +67,13 @@ def work_on_frame(image):
         return
 
     plate = cv2.resize(plate, (int(plate.shape[1] * (85 / plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
+
+    # resize : Resizes an image.
+    # params, image, dst_size, interpolation
+    # inter_linar is a bilinear interpolation (used by default)
+    # The function resize resizes the image src down to or up to the specified size. Note that the
+    # initial dst type or size are not taken into account. Instead, the size and type are derived
+    # from the src, dsize, fx, and fy .
 
     return recognize.recognition(cv2.threshold(plate, functions.isodata_threshold(plate), 255, cv2.THRESH_BINARY_INV)[1])
 

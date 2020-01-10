@@ -31,6 +31,13 @@ def recognize_character(image):
     score = np.zeros(28)
     list_of_score = []
 
+    # bitwise_not : The function calculates per-element bit-wise inversion of the input array:
+    # dst[i] = ~src[i]
+
+    # bitwise_xor : Calculates the per-element bit-wise “exclusive or” operation on two arrays or an array and a scalar.
+    # Two arrays when src1 and src2 have the same size:
+    # dst[i] = src1[i] xor src2[i] if mask[i] != 0
+
     for i in range(1, 18):
         character = cv2.imread("data/SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
         coef = character.shape[0] * width * 255
@@ -79,11 +86,12 @@ def recognition(plate):
 
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_GRAY2BGR)
 
+    # draw columns
     for i in hori_end:
-        new_plate = cv2.line(new_plate, (i, 0), (i, h), (0, 255, 0), 1)
+        new_plate = cv2.line(new_plate, (i, 0), (i, h), (0, 255, 0), 2)
 
     for i in verti_end:
-        plate = cv2.line(plate, (0, h - i), (w, h - i), (160, 0, 0), 1)
+        plate = cv2.line(plate, (0, h - i), (w, h - i), (0, 255, 0), 2)
 
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_BGR2GRAY)
 

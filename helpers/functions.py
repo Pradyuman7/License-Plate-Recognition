@@ -34,6 +34,8 @@ valuees = {
 
 
 def clear_border(plate, ep):
+    # removes borders from gray scale image
+    # ep is the max width of part that should be removed around the image
     h = plate.shape[0]
     w = plate.shape[1]
 
@@ -46,6 +48,8 @@ def clear_border(plate, ep):
 
 
 def isodata_threshold(img):
+    # isodata threshold the image (gray scale)
+    # isodata_threshold :
     try:
         hist, bins = np.histogram(img.ravel(), 256, [0, 256])
         hist = hist[:120]
@@ -70,13 +74,14 @@ def isodata_threshold(img):
             t.append(int(np.average([m1, m2])))
             i += 1
 
-        # print("threshold is : ", t[i])
         return t[i]
     except ZeroDivisionError:
         return 0
 
 
 def search_boundary_1(hp, T):
+    # t is the threshold for finding difference betweeen blank and characters
+    # vertical boundary
     N = len(hp)
     i = 0
 
