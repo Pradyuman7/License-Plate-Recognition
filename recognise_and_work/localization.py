@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 
-def four_point_transform(image, coords):
+def warp_perspective_image(image, coords):
     rect = make_rect(coords)
     (a, b, c, d) = rect
 
@@ -59,9 +59,10 @@ def make_rect(coords):
     return rect
 
 
-def find_plate_in_frame(image, contours):
+def localise_plates(image, contours):
     # localise straight plates
     contour = []
+
     for c in contours:
         rect = cv2.minAreaRect(c)
         box = cv2.boxPoints(rect)
@@ -83,5 +84,4 @@ def find_plate_in_frame(image, contours):
     if len(contour) == 0:
         return image
     else:
-        # Finds the minimal rectangle that bounds the contour
-        return four_point_transform(image, contour[0])
+        return warp_perspective_image(image, contour[0])

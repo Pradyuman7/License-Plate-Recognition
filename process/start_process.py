@@ -44,11 +44,17 @@ def work_on_frame(image):
     # The largest value is used to find initial segments of strong edges.
     # canny algorithm works as following :
     # Apply Gaussian filter to smooth the image in order to remove the noise
-    # Find the intensity gradients of the image
+    # Find the intensity gradients of the image (An image gradient is a
+    # directional change in the intensity or color in an image)
     # Apply non-maximum suppression to get rid of spurious response to edge detection
+    # NMS : transform a smooth response map that triggers many imprecise object
+    # window hypotheses in, ideally, a single bounding-box for each detected object.
     # Apply double threshold to determine potential edges
     # Track edge by hysteresis: Finalize the detection of edges by suppressing all the other edges
     # that are weak and not connected to strong edges.
+    # hysterisis: hysteresis compares two images to build an intermediate image. The function
+    # takes two binary images that have been thresholded at different levels. The higher threshold
+    # has a smaller population of white pixels. The values in the higher threshold are more likely to be real edges.
 
     # find contours of the image
     contours, _ = cv2.findContours(canny_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -56,12 +62,12 @@ def work_on_frame(image):
     # findContours : Finds contours in a binary image.
     # params, image, mode, method
     # retr_tree retrieves all of the contours and reconstructs a full hierarchy of nested contours
-    # chain_approx_nonde stores absolutely all the contour points. That is, any 2 subsequent points
+    # chain_approx_none stores absolutely all the contour points. That is, any 2 subsequent points
     # (x1,y1) and (x2,y2) of the contour will be either horizontal, vertical or diagonal neighbors,
     # that is, max(abs(x1-x2),abs(y2-y1))==1.
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    plate = localization.find_plate_in_frame(gray, contours)
+    plate = localization.localise_plates(gray, contours)
 
     if plate is None:
         return
@@ -92,8 +98,8 @@ def start_video(file_path, sample_frequency, output_path):
             break
 
         plates_found.append([work_on_frame(frame), speed, speed / fps])
-
-        speed += 1
+        # plates_found.append(do_everything(frame))
+        speed += 12
         cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
 
         data_frame = pd.DataFrame(plates_found, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
@@ -113,3 +119,31 @@ def start_video(file_path, sample_frequency, output_path):
 def show_plates(plates):
     for plate in plates:
         print(plate)
+
+
+# def do_everything(frame):
+#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#     blur = cv2.GaussianBlur(gray, (5, 5), 0)
+#     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
+#
+#     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+#     plate = ''
+#
+#     for cnt in contours:
+#         if cv2.contourArea(cnt) > 50:
+#             [x, y, w, h] = cv2.boundingRect(cnt)
+#
+#             if h > 28:
+#                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+#                 roi = thresh[y:y + h, x:x + w]
+#                 roismall = cv2.resize(roi, (10, 10))
+#                 # cv2.imshow('normal', frame)
+#                 sample = roismall.reshape((1, 100))
+#
+#                 cv2.imshow("image", roi)
+#                 char = recognize.recognize_template_matching(sample)
+#                 # print(char)
+#
+#                 plate += char
+#
+#     return plate
