@@ -99,7 +99,7 @@ def start_video(file_path, sample_frequency, output_path):
 
         plates_found.append([work_on_frame(frame), speed, speed / fps])
         # plates_found.append(do_everything(frame))
-        speed += 12
+        speed += 1
         cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
 
         data_frame = pd.DataFrame(plates_found, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
