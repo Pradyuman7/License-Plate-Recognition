@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
+from helpers import functions
 
 
 def warp_perspective_image(image, coords):
-    rect = make_rect(coords)
+    rect = functions.rectangle(coords)
     (a, b, c, d) = rect
 
     # width of image will be max distance between bottom_left and bottom_right
@@ -40,25 +41,6 @@ def warp_perspective_image(image, coords):
     return cv2.warpPerspective(image, cv2.getPerspectiveTransform(rect, dst), (maxWidth, maxHeight))
 
 
-def make_rect(coords):
-    # makes the rectangle from top_left to bottom_left order of points
-    rect = np.zeros((4, 2), dtype="float32")
-
-    s = coords.sum(axis=1)
-
-    # top_left will have smallest sum, bottom_right will have largest
-
-    # in difference top_right smallest diff, bottom_left largest diff
-    diff = np.diff(coords, axis=1)
-
-    rect[0] = coords[np.argmin(s)]
-    rect[1] = coords[np.argmin(diff)]
-    rect[2] = coords[np.argmax(s)]
-    rect[3] = coords[np.argmax(diff)]
-
-    return rect
-
-
 def localise_plates(image, contours):
     # localise straight plates
     contour = []
@@ -84,4 +66,8 @@ def localise_plates(image, contours):
     if len(contour) == 0:
         return image
     else:
-        return warp_perspective_image(image, contour[0])
+        list_of_local = []
+        for f in contour:
+            list_of_local.append(warp_perspective_image(image, f))
+
+        return list_of_local

@@ -98,6 +98,25 @@ def search_boundary_1(hp, T):
     return [lower, higher]
 
 
+def rectangle(coords):
+    # makes the rectangle from top_left to bottom_left order of points
+    rect = np.zeros((4, 2), dtype="float32")
+
+    s = coords.sum(axis=1)
+
+    # top_left will have smallest sum, bottom_right will have largest
+
+    # in difference top_right smallest diff, bottom_left largest diff
+    diff = np.diff(coords, axis=1)
+
+    rect[0] = coords[np.argmin(s)]
+    rect[1] = coords[np.argmin(diff)]
+    rect[2] = coords[np.argmax(s)]
+    rect[3] = coords[np.argmax(diff)]
+
+    return rect
+
+
 def search_boundary_2(proj):
     N = len(proj)
     start = 0

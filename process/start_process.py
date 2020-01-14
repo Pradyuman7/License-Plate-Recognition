@@ -67,12 +67,33 @@ def work_on_frame(image):
     # that is, max(abs(x1-x2),abs(y2-y1))==1.
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    plate = localization.localise_plates(gray, contours)
+    plates = localization.localise_plates(gray, contours)
 
-    if plate is None:
+    if plates is None or len(plates) == 0:
         return
 
-    plate = cv2.resize(plate, (int(plate.shape[1] * (85 / plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
+    plate_numbers = []
+
+    for plate in plates:
+        # print(plate.shape)
+        # if plate.shape[1] is None or plate.shape[0] is None:
+        #     print("None")
+
+        if len(plate.shape) == 2:
+            dim = (int(plate.shape[1] * (85 / plate.shape[0])), 85)
+            plate = cv2.resize(plate, dim, interpolation=cv2.INTER_LINEAR)
+
+            epsilon = 10
+            plate = plate[epsilon:plate.shape[0] - epsilon, epsilon:plate.shape[1] - epsilon]
+            plate = cv2.GaussianBlur(plate, (5, 5), 0)
+
+            num = recognize.recognition(cv2.threshold(plate, functions.isodata_threshold(plate), 255, cv2.THRESH_BINARY_INV)[1])
+
+            if num is not None:
+                plate_numbers.append(num)
+
+
+    # plates = cv2.resize(plates, (int(plates.shape[1] * (85 / plates.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
 
     # resize : Resizes an image.
     # params, image, dst_size, interpolation
@@ -81,7 +102,7 @@ def work_on_frame(image):
     # initial dst type or size are not taken into account. Instead, the size and type are derived
     # from the src, dsize, fx, and fy .
 
-    return recognize.recognition(cv2.threshold(plate, functions.isodata_threshold(plate), 255, cv2.THRESH_BINARY_INV)[1])
+    return plate_numbers
 
 
 def start_video(file_path, sample_frequency, output_path):
@@ -97,7 +118,12 @@ def start_video(file_path, sample_frequency, output_path):
         if (not flag) or (cv2.waitKey(1) & 0xFF == ord('q')):
             break
 
-        plates_found.append([work_on_frame(frame), speed, speed / fps])
+        list_here = work_on_frame(frame)
+
+        if list_here is not None and len(list_here) != 0:
+            for plt in list_here:
+                plates_found.append([plt, speed, speed / fps])
+
         # plates_found.append(do_everything(frame))
         speed += 12
         cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
