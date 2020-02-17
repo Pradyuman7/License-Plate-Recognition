@@ -3,8 +3,8 @@ import os
 from process import start_process
 
 
-# define the required arguments: video path(file_path), sample frequency(second), saving path for final result table
-# for more information of 'argparse' module, see https://docs.python.org/3/library/argparse.html
+
+
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--file_path', type=str, default='TrainingVideo.avi')
@@ -14,7 +14,7 @@ def get_args():
     return args
 
 
-# In this file, you need to pass three arguments into CaptureFrame_Process function.
+
 if __name__ == '__main__':
     args = get_args()
     if args.output_path is None:

@@ -5,43 +5,43 @@ import pandas as pd
 
 
 def work_on_frame(image):
-    # blur the image to make all colors of the frame uniform
+
     blur = cv2.GaussianBlur(image, (3, 3), 0)
-    # hue, saturation, value model, used to select various different colors needed for a particular picture
+
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    # GaussianBlur :
 
-    # find only yellow parts of the image, [10,65,40] upto [35,355,215]
+
+
     mask = cv2.inRange(hsv, (10, 65, 40), (35, 255, 215))
     bit_mast = cv2.bitwise_and(image, image, mask=mask)
 
-    # bitwise_and : calculates the per-element bit-wise logical conjunction
-    # Two arrays when src1 and src2 have the same size:
-    # dst[i] = scr1[i] ^ scr2[i] if mask[i] != 0
 
-    # inRange : Checks if array elements lie between the elements of two other arrays.
-    # params, src is first input array, lower-bound inclusive, upper bound inclusive
-    # return dst where dst[i[ = low[i] <= src[i] <= up[i]
 
-    # convert hsv to gray
+
+
+
+
+
+
+
     gray = cv2.cvtColor(bit_mast, cv2.COLOR_BGR2GRAY)
 
-    # binarisation of the image
+
     (thresh, binary) = cv2.threshold(gray, 12, 255, cv2.THRESH_BINARY)
 
-    # threshold : Applies a fixed-level threshold to each array element.
-    # params, src, threshold value, max value
-    # for thresh_binary :
-    # dst(x,y) = max_val if src(x,y) >  thresh else 0
 
-    # edge detection using canny algorithm
+
+
+
+
+
     canny_edges = cv2.Canny(binary, 50, 100)
 
-    # Canny : Finds edges in an image using the [Canny86] algorithm.
-    # params, image, thesh_1, thresh_2
-    # The smallest value between threshold1 and threshold2 is used for edge linking.
-    # The largest value is used to find initial segments of strong edges.
+
+
+
+
     # canny algorithm works as following :
     # Apply Gaussian filter to smooth the image in order to remove the noise
     # Find the intensity gradients of the image (An image gradient is a
