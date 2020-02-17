@@ -41,19 +41,20 @@ def warp_perspective_image(image, coords):
 
 
 def make_rect(coords):
+    # reference wikipedia, opencv tutorial, youtube
     # makes the rectangle from top_left to bottom_left order of points
     rect = np.zeros((4, 2), dtype="float32")
 
     s = coords.sum(axis=1)
 
     # top_left will have smallest sum, bottom_right will have largest
+    rect[0] = coords[np.argmin(s)]
+    rect[2] = coords[np.argmax(s)]
 
     # in difference top_right smallest diff, bottom_left largest diff
     diff = np.diff(coords, axis=1)
 
-    rect[0] = coords[np.argmin(s)]
     rect[1] = coords[np.argmin(diff)]
-    rect[2] = coords[np.argmax(s)]
     rect[3] = coords[np.argmax(diff)]
 
     return rect
@@ -63,14 +64,15 @@ def localise_plates(image, contours):
     # localise straight plates
     contour = []
 
-    for c in contours:
-        rect = cv2.minAreaRect(c)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        area = cv2.contourArea(box)
+    if len(contours) != 0:
+        for c in contours:
+            rect = cv2.minAreaRect(c)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            area = cv2.contourArea(box)
 
-        if area > 2500:
-            contour.append(box)
+            if area > 2500:
+                contour.append(box)
 
     # minAreaRect : Finds a rotated rectangle of the minimum area enclosing the input 2D point set.
     # input points parameter
@@ -81,7 +83,13 @@ def localise_plates(image, contours):
 
     # contourArea : Calculates a contour area of the box given
 
-    if len(contour) == 0:
-        return image
-    else:
-        return warp_perspective_image(image, contour[0])
+    # if len(contour) == 0:
+    #     return image
+    # else:
+    #     return warp_perspective_image(image, contour[0])
+
+    all_img = []
+    for c in contour:
+        all_img.append(warp_perspective_image(image, c))
+
+    return all_img

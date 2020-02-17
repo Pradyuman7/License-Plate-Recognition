@@ -10,29 +10,19 @@ def form_plate_number(image, bounds):
     for i in range(N - 1):
         plate_number += recognize_character(image[:, bounds[i]:bounds[i + 1]])
 
-    if plate_number.startswith('H') and plate_number.endswith('H'):
-        plate_number = plate_number[1:-1]
-    #     return plate_number.replace('H', '-')
-    elif plate_number.startswith('H'):
-        plate_number = plate_number[1:]
-    #     return plate_number.replace('H', '-')
-    elif plate_number.endswith('H'):
-        plate_number = plate_number[:-1]
-    #     return plate_number.replace('H', '-')
-    # else:
-    #     return plate_number.replace('H', '-')
+    # if plate_number.startswith('H') and plate_number.endswith('H'):
+    #     plate_number = plate_number[1:-1]
+    # #     return plate_number.replace('H', '-')
+    # elif plate_number.startswith('H'):
+    #     plate_number = plate_number[1:]
+    # #     return plate_number.replace('H', '-')
+    # elif plate_number.endswith('H'):
+    #     plate_number = plate_number[:-1]
+    # #     return plate_number.replace('H', '-')
+    # # else:
+    # #     return plate_number.replace('H', '-')
 
     return plate_number
-
-
-# def recognise_sift(image):
-#
-#     for i in range(1, 18):
-#         character = cv2.imread("data/SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
-#
-#         orb = cv2.ORB()
-#         kp1, des1 = orb.detectAndCompute(character, None)
-#         kp2, des2 = orb.detectAndCompute(character, None)
 
 
 def recognize_character_pixel(image):
@@ -175,18 +165,20 @@ def recognize_character(image):
     return functions.valuees[str(np.argmax(score))]
 
 
-def recognition(plate):
-    plate = functions.clear_border(plate, (13, 13))
+def recognition_segment(plate):
+    plate = functions.clear_border(plate, (5, 7))
+
+    # lessen space between letters : reference youtube video
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    plate = cv2.dilate(plate, kernel, iterations=1)
 
     hori = np.sum(plate, axis=1)
-    verti_end = functions.search_boundary_1(hori, 1000)
+    verti_end = functions.search_boundary_1(hori, 15300)
 
     new_plate = plate[verti_end[0] + 1:verti_end[1]][:]
-    new_plate = cv2.resize(new_plate, (int(new_plate.shape[1] * (85 / new_plate.shape[0])), 85),
-                           interpolation=cv2.INTER_LINEAR)
+    new_plate = cv2.resize(new_plate, (int(new_plate.shape[1] * (85 / new_plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
 
-    ver_sum = np.sum(new_plate, axis=0)
-    hori_end = functions.search_boundary_2(ver_sum)
+    hori_end = functions.search_boundary_2(np.sum(new_plate, axis=0))
 
     w = new_plate.shape[1]
     h = new_plate.shape[0]
