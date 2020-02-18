@@ -1,198 +1,116 @@
 import cv2
 import numpy as np
+
 from helpers import functions
 
 
-def form_plate_number(image, bounds):
+def divide_characters(image, bounds):
     N = len(bounds)
     plate_number = ""
 
     for i in range(N - 1):
-        plate_number += recognize_character(image[:, bounds[i]:bounds[i + 1]])
+        character_image = image[:, bounds[i]:bounds[i + 1]]
+        plate_number = plate_number + match_characters(character_image)
 
+    indexes = functions.find_all_indexes(plate_number, "-")
+    N = len(indexes)
+    M = len(plate_number)
 
-
-
-
-
-
-
-
-
-
-
+    if N:
+        if (N != 2) or (indexes[0] == 0) or (indexes[N - 1] == M - 1):
+            return None
 
     return plate_number
 
 
-def recognize_character_pixel(image):
+def match_characters(character_image):
+    character_image_width = character_image.shape[1]
     score = np.zeros(28)
-    list_of_score = []
+    intermediate_score = []
 
-    for number in range(1, 18):
-        character = cv2.imread("data/SameSizeLetters/" + str(number) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        image = cv2.resize(image, (character.shape[0], character.shape[1]))
-        count = 0
+    if character_image_width <= 98:
+        for i in range(17):
+            file_path = "data/SameSizeLetters/" + str(i + 1) + ".bmp"
+            test_char = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            test_character_width = test_char.shape[1]
+            normalize_coef = test_char.shape[0] * character_image_width * 255
 
-        for i in range(0, character.shape[0]):
-            for j in range(0, character.shape[1]):
-                for k in range(0, image.shape[0]):
-                    for l in range(0, image.shape[1]):
-                        if character[i][j] == image[k][l]:
-                            count += 1
+            for start in range(min([test_character_width - character_image_width - 1, 2])):
+                crop_tc = test_char[:, start:start + character_image_width]
 
-        list_of_score.append(count)
-        score[number - 1] = max(list_of_score)
+                intermediate_score.append(
+                    np.sum(cv2.bitwise_not(cv2.bitwise_xor(crop_tc, character_image))) / normalize_coef)
+            score[i] = max(intermediate_score)
 
-    for number in range(10):
-        character = cv2.imread("data/SameSizeNumbers/" + str(number) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        image = cv2.resize(image, character.shape[0], character.shape[1])
-        count = 0
+            intermediate_score.clear()
 
-        for i in range(0, character.shape[0]):
-            for j in range(0, character.shape[1]):
-                for k in range(0, image.shape[0]):
-                    for l in range(0, image.shape[1]):
-                        if character[i][j] == image[k][l]:
-                            count += 1
+        for i in range(10):
+            file_path = "data/SameSizeNumbers/" + str(i) + ".bmp"
+            test_char = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            test_character_width = test_char.shape[1]
+            normalize_coef = test_char.shape[0] * character_image_width * 255
 
-        list_of_score.append(count)
-        score[number + 17] = max(list_of_score)
+            for start in range(min([test_character_width - character_image_width - 1, 2])):
+                crop_tc = test_char[:, start:start + character_image_width]
 
-    return functions.valuees[str(np.argmax(score))]
+                intermediate_score.append(
+                    np.sum(cv2.bitwise_not(cv2.bitwise_xor(crop_tc, character_image))) / normalize_coef)
+            score[17 + i] = max(intermediate_score)
+            intermediate_score.clear()
 
+        test_char = functions.create_bar_character(character_image.shape, 10, 15)  # bar character
+        test_character_height = test_char.shape[0]
+        normalize_coef = character_image.shape[0] * character_image_width * 255
 
-def recognize_template_matching(image):
-    scores = np.zeros(28)
-    list_of_score = []
+        for start in range(test_character_height - character_image.shape[0] - 1):
+            crop_tc = test_char[start:start + character_image.shape[0], :]
 
+            intermediate_score.append(
+                np.sum(cv2.bitwise_not(cv2.bitwise_xor(crop_tc, character_image))) / normalize_coef)
+        score[27] = max(intermediate_score)
+        intermediate_score.clear()
 
+        return functions.lookup_table[str(np.argmax(score))]
 
-
-    for i in range(1, 18):
-        character = cv2.imread("data/SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        result = cv2.matchTemplate(image, character, cv2.TM_CCOEFF)
-
-        if result is not None:
-            (_, score, _, _) = cv2.minMaxLoc(result)
-            list_of_score.append(score)
-
-        if len(list_of_score) != 0:
-            scores[i - 1] = max(list_of_score)
-            list_of_score = []
-
-    for i in range(10):
-        character = cv2.imread("data/SameSizeNumbers/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        result = cv2.matchTemplate(character, image, cv2.TM_CCOEFF)
-
-        if result is not None:
-            (_, score, _, _) = cv2.minMaxLoc(result)
-            list_of_score.append(score)
-
-        if len(list_of_score) != 0:
-            scores[i - 1] = max(list_of_score)
-            list_of_score = []
+    else:
+        return ""
 
 
-
-    return functions.valuees[str(np.argmax(scores))]
-
-
-def recognize_character(image):
-    width = image.shape[1]
-    score = np.zeros(28)
-    list_of_score = []
-
-
-
-
-
-
-
-
-    for i in range(1, 18):
-        character = cv2.imread("data/SameSizeLetters/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        coef = character.shape[0] * width * 255
-
-        for j in range(character.shape[1] - width - 1):
-            temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, j:j + width], image)))
-
-            if temp is not None:
-                list_of_score.append(temp / coef)
-
-        if len(list_of_score) != 0:
-            score[i - 1] = max(list_of_score)
-            list_of_score = []
-
-    for i in range(10):
-        character = cv2.imread("data/SameSizeNumbers/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
-        coef = character.shape[0] * width * 255
-
-        for j in range(character.shape[1] - width - 1):
-            temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(character[:, j:j + width], image)))
-
-            if temp is not None:
-                list_of_score.append(temp / coef)
-
-        if len(list_of_score) != 0:
-            score[17 + i] = max(list_of_score)
-            list_of_score = []
-
-    he = image.shape[0] + 40
-    wi = image.shape[1]
-
-    char = np.zeros((he, wi), np.uint8)
-    start = int(he / 2) - 5
-    end = start + 12
-    from_ = 0
-    end_ = from_ + 14
-
-    char[start:end, from_:end_] = 255 * np.ones([12, min(14, wi)])
-
-    test_character_height = char.shape[0]
-    coef = image.shape[0] * width * 255
-
-    for start in range(test_character_height - image.shape[0] - 1):
-        temp = np.sum(cv2.bitwise_not(cv2.bitwise_xor(char[start:start + image.shape[0], :], image)))
-
-        if temp is not None:
-            list_of_score.append(temp / coef)
-
-    if len(list_of_score) != 0:
-        score[27] = max(list_of_score)
-        list_of_score.clear()
-
-    return functions.valuees[str(np.argmax(score))]
-
-
-def recognition_segment(plate):
-    plate = functions.clear_border(plate, (5, 7))
-
+def segment_and_recognize(plate_img):
+    plate_img = functions.clean_borders(plate_img, (4, 7))
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-    plate = cv2.dilate(plate, kernel, iterations=1)
+    plate_img = cv2.dilate(plate_img, kernel, iterations=1)
 
-    hori = np.sum(plate, axis=1)
-    verti_end = functions.search_boundary_1(hori, 15300)
+    horizontal_project = np.sum(plate_img, axis=1)
+    vertical_bounds = functions.find_vertical_bounds(horizontal_project, 16800)
 
-    new_plate = plate[verti_end[0] + 1:verti_end[1]][:]
-    new_plate = cv2.resize(new_plate, (int(new_plate.shape[1] * (85 / new_plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
+    new_plate = plate_img[vertical_bounds[0] + 1:vertical_bounds[1]][:]
 
-    hori_end = functions.search_boundary_2(np.sum(new_plate, axis=0))
+    resize_factor = 85 / new_plate.shape[0]
+    dim = (int(new_plate.shape[1] * resize_factor), 85)
+    new_plate = cv2.resize(new_plate, dim, interpolation=cv2.INTER_LINEAR)
 
-    w = new_plate.shape[1]
-    h = new_plate.shape[0]
+    vertical_project = np.sum(new_plate, axis=0)
+    horizontal_bounds = functions.find_horizontal_bounds(vertical_project)
+
+    if len(horizontal_bounds) < 6:
+        return None
+
+    img_width = new_plate.shape[1]
+    img_height = new_plate.shape[0]
 
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_GRAY2BGR)
 
+    for bnd in vertical_bounds:
+        plate_img = cv2.line(plate_img, (0, img_height - bnd), (img_width, img_height - bnd), (160, 0, 0), 1)
+    for bnd in horizontal_bounds:
+        new_plate = cv2.line(new_plate, (bnd, 0), (bnd, img_height), (0, 255, 0), 1)
 
-    for i in hori_end:
-        new_plate = cv2.line(new_plate, (i, 0), (i, h), (0, 255, 0), 2)
-
-    for i in verti_end:
-        plate = cv2.line(plate, (0, h - i), (w, h - i), (0, 255, 0), 2)
+    cv2.imshow('Plate image', new_plate)
+    cv2.waitKey(25)
 
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_BGR2GRAY)
+    plate_number = divide_characters(new_plate, horizontal_bounds)
 
-    cv2.imshow("plate", new_plate)
-    return form_plate_number(new_plate, hori_end)
+    return plate_number
