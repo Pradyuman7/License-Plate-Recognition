@@ -1,8 +1,8 @@
 import cv2
 import pandas as pd
 
-from helpers import  functions
 from recognise_and_work import localization
+from helpers import functions
 from recognise_and_work import recognize
 
 
@@ -64,37 +64,104 @@ def help_recognize(frame):
     return plate_number
 
 
-file_path = "/Users/pd/Desktop/License-Plate-Recognition/trainingsvideo.avi"  # "TrainingSet/Categorie III/Video47_2.avi"  #
-capture = cv2.VideoCapture(file_path)
+def start_video(file_path, sample_frequency, output_path):
+    cap = cv2.VideoCapture(file_path)
+    fps = 12
+    speed = 0
+    recognized_plates = []
+    cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
 
-# parameters
-act_frame = 0
-fps = 12
-sample_frequency = 0.5  # frequency for choosing the frames to analyze
+    while True:
+        flag, frame = cap.read()
 
-# initialization
-ret, frame = capture.read()
-recognized_plates = []
+        if (not flag) or (cv2.waitKey(1) & 0xFF == ord('q')):
+            break
 
-# display image to analyze (each 24 frames)
-while ret:
-    # Show actual frame
-    cv2.imshow('Frame', frame)
-    cv2.waitKey(10)  # gives enough time for image to be displayed
-    mode = 0
-    plates = help_recognize(frame)
-    if plates != None:
-        for ind in range(len(plates)):
-            recognized_plates.append([plates[ind], act_frame, act_frame / fps])
+        plates = help_recognize(frame)
+        if plates != None:
+            for ind in range(len(plates)):
+                recognized_plates.append([plates[ind], speed, speed / fps])
+        # plates_found.append(do_everything(frame))
+        speed += 24
+        cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
 
-    # Write csv file (using pandas) to keep a record of plate number
-    df = pd.DataFrame(recognized_plates, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
-    save_path = 'record.csv'
-    df.to_csv(save_path, index=None)  # 'record.csv'
+        data_frame = pd.DataFrame(recognized_plates, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
 
-    act_frame += 24
-    capture.set(cv2.CAP_PROP_POS_FRAMES, act_frame)
-    ret, frame = capture.read()
+        if output_path is None:
+            data_frame.to_csv('record.csv', index=None)
+        else:
+            data_frame.to_csv(output_path + '/record.csv', index=None)
+        # cv2.imshow("original_frame", frame)
 
-capture.release()
-cv2.destroyAllWindows()
+    show_plates(recognized_plates)
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+def show_plates(plates):
+    for plate in plates:
+        print(plate)
+
+
+def do_everything(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
+
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    plate = ''
+
+    for cnt in contours:
+        if cv2.contourArea(cnt) > 50:
+            [x, y, w, h] = cv2.boundingRect(cnt)
+
+            if h > 28:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                roi = thresh[y:y + h, x:x + w]
+                roismall = cv2.resize(roi, (10, 10))
+                # cv2.imshow('normal', frame)
+                sample = roismall.reshape((1, 100))
+
+                cv2.imshow("image", roi)
+                char = recognize.recognize_template_matching(sample)
+                # print(char)
+
+                plate += char
+    return plate
+
+
+# file_path = "/Users/pd/Desktop/License-Plate-Recognition/trainingsvideo.avi"  # "TrainingSet/Categorie III/Video47_2.avi"  #
+# capture = cv2.VideoCapture(file_path)
+#
+# # parameters
+# act_frame = 0
+# fps = 12
+# sample_frequency = 0.5  # frequency for choosing the frames to analyze
+#
+# # initialization
+# ret, frame = capture.read()
+# recognized_plates = []
+#
+# # display image to analyze (each 24 frames)
+# while ret:
+#     # Show actual frame
+#     cv2.imshow('Frame', frame)
+#     cv2.waitKey(10)  # gives enough time for image to be displayed
+#     mode = 0
+#     plates = help_recognize(frame)
+#     if plates != None:
+#         for ind in range(len(plates)):
+#             recognized_plates.append([plates[ind], act_frame, act_frame / fps])
+#
+#     # Write csv file (using pandas) to keep a record of plate number
+#     df = pd.DataFrame(recognized_plates, columns=['License plate', 'Frame no.', 'Timestamp(seconds)'])
+#     save_path = 'record.csv'
+#     df.to_csv(save_path, index=None)  # 'record.csv'
+#
+#     act_frame += 24
+#     capture.set(cv2.CAP_PROP_POS_FRAMES, act_frame)
+#     ret, frame = capture.read()
+#
+# capture.release()
+# cv2.destroyAllWindows()
