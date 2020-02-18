@@ -4,6 +4,8 @@ import numpy as np
 from helpers import functions
 
 
+# localise straight plates
+
 def plate_detection(image, contours):
 
     final_contours = []

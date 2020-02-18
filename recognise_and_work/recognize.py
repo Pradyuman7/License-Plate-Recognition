@@ -35,6 +35,12 @@ def match_characters(character_image):
             test_character_width = test_char.shape[1]
             normalize_coef = test_char.shape[0] * character_image_width * 255
 
+            # bitwise_not : The function calculates per-element bit-wise inversion of the input array:
+            # dst[i] = ~src[i]
+
+            # bitwise_xor : Calculates the per-element bit-wise “exclusive or” operation on two arrays or an array and a scalar.
+            # Two arrays when src1 and src2 have the same size:
+            # dst[i] = src1[i] xor src2[i] if mask[i] != 0
             for start in range(min([test_character_width - character_image_width - 1, 2])):
                 crop_tc = test_char[:, start:start + character_image_width]
 
@@ -52,6 +58,12 @@ def match_characters(character_image):
 
             for start in range(min([test_character_width - character_image_width - 1, 2])):
                 crop_tc = test_char[:, start:start + character_image_width]
+                # bitwise_not : The function calculates per-element bit-wise inversion of the input array:
+                # dst[i] = ~src[i]
+
+                # bitwise_xor : Calculates the per-element bit-wise “exclusive or” operation on two arrays or an array and a scalar.
+                # Two arrays when src1 and src2 have the same size:
+                # dst[i] = src1[i] xor src2[i] if mask[i] != 0
 
                 intermediate_score.append(
                     np.sum(cv2.bitwise_not(cv2.bitwise_xor(crop_tc, character_image))) / normalize_coef)
@@ -64,7 +76,12 @@ def match_characters(character_image):
 
         for start in range(test_character_height - character_image.shape[0] - 1):
             crop_tc = test_char[start:start + character_image.shape[0], :]
+            # bitwise_not : The function calculates per-element bit-wise inversion of the input array:
+            # dst[i] = ~src[i]
 
+            # bitwise_xor : Calculates the per-element bit-wise “exclusive or” operation on two arrays or an array and a scalar.
+            # Two arrays when src1 and src2 have the same size:
+            # dst[i] = src1[i] xor src2[i] if mask[i] != 0
             intermediate_score.append(
                 np.sum(cv2.bitwise_not(cv2.bitwise_xor(crop_tc, character_image))) / normalize_coef)
         score[27] = max(intermediate_score)

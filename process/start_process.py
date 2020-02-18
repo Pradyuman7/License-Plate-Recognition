@@ -7,16 +7,20 @@ from recognise_and_work import recognize
 
 
 def help_recognize(frame):
+    # blur the image to make all colors of the frame uniform
+
     blur = cv2.GaussianBlur(frame, (9, 9), 0)
 
     hsv_img = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
+    # find only orange parts of the image
     light_orange = (15, 60, 50)
     dark_orange = (37, 255, 220)
     mask = cv2.inRange(hsv_img, light_orange, dark_orange)
     masked = cv2.bitwise_and(frame, frame, mask=mask)
     cv2.imshow("Masked", masked)
     cv2.waitKey(10)
+    # convert hsv to gray
 
     gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
@@ -31,11 +35,13 @@ def help_recognize(frame):
 
     if plates is not None:
         plate_number = []
+
         for plate_image in plates:
+            # intermediate_plate_number =helper(plate_image)
+
             resize_factor = 85 / plate_image.shape[0]
             dim = (int(plate_image.shape[1] * resize_factor), 85)
             plate_image = cv2.resize(plate_image, dim, interpolation=cv2.INTER_LINEAR)
-
             epsilon = 10
             plate_image = plate_image[epsilon:plate_image.shape[0] - epsilon, epsilon:plate_image.shape[1] - epsilon]
             plate_image = cv2.GaussianBlur(plate_image, (5, 5), 0)
@@ -50,7 +56,7 @@ def help_recognize(frame):
                     bin_plate = cv2.threshold(plate_image, T, 255, cv2.THRESH_BINARY_INV)[1]
                     first_time += 1
                 else:
-                    T = T - 20
+                    T = T - 10
                     bin_plate = cv2.threshold(plate_image, T, 255, cv2.THRESH_BINARY_INV)[1]
                     first_time += 1
                 cv2.imshow("bin_plate", bin_plate)
@@ -62,6 +68,31 @@ def help_recognize(frame):
         plate_number = None
 
     return plate_number
+#
+# def helper(plate_image):
+#     resize_factor = 85 / plate_image.shape[0]
+#     dim = (int(plate_image.shape[1] * resize_factor), 85)
+#     plate_image = cv2.resize(plate_image, dim, interpolation=cv2.INTER_LINEAR)
+#     epsilon = 10
+#     plate_image = plate_image[epsilon:plate_image.shape[0] - epsilon, epsilon:plate_image.shape[1] - epsilon]
+#     plate_image = cv2.GaussianBlur(plate_image, (5, 5), 0)
+#     cv2.imshow("plate_image", plate_image)
+#     cv2.waitKey(25)
+#     first_time = 0
+#     intermediate_plate_number = None
+#     while (first_time < 5) and (intermediate_plate_number is None):
+#         if first_time == 0:
+#             T = functions.isodata_threshold(plate_image)
+#             bin_plate = cv2.threshold(plate_image, T, 255, cv2.THRESH_BINARY_INV)[1]
+#             first_time += 1
+#         else:
+#             T = T - 10
+#             bin_plate = cv2.threshold(plate_image, T, 255, cv2.THRESH_BINARY_INV)[1]
+#             first_time += 1
+#         cv2.imshow("bin_plate", bin_plate)
+#         cv2.waitKey(10)
+#         intermediate_plate_number = recognize.segment_and_recognize(bin_plate)
+#         return intermediate_plate_number
 
 
 def start_video(file_path, sample_frequency, output_path):
