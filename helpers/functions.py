@@ -3,6 +3,9 @@ import cv2
 
 
 def isodata_threshold(img):
+    # # isodata threshold the image (gray scale)
+    # # isodata_threshold :
+    # # reference youtube video
     hist, bins = np.histogram(img.ravel(), 256, [0, 256])
     h = 1 / 8 * np.ones(8)
     hist = np.convolve(h, hist)[:256]
@@ -70,14 +73,16 @@ def clean_borders(plate_image, epsilon):
 
     return plate_image
 
-
+# gets the view of all plates from the same angle
 def verify_plate(box):
     rect = order_points(box)
     (tl, tr, br, bl) = rect
+    # #width of image will be max distance between bottom_left and bottom_right
 
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
     widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
     maxWidth = max(int(widthA), int(widthB))
+    ## height of image will be max distance between top_right and bottom_right
 
     heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
     heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
@@ -173,22 +178,51 @@ def find_all_indexes(input_str, search_str):
 def four_point_transform(image, pts):
     rect = order_points(pts)
     (tl, tr, br, bl) = rect
-
+   # # width of image will be max distance between bottom_left and bottom_right
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
     widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
     maxWidth = max(int(widthA), int(widthB))
+     # # height of image will be max distance between top_right and bottom_right
 
     heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
     heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
     maxHeight = max(int(heightA), int(heightB))
-
+        # #get top down view of the final points in same order as rect
     dst = np.array([
         [0, 0],
         [maxWidth - 1, 0],
         [maxWidth - 1, maxHeight - 1],
         [0, maxHeight - 1]], dtype="float32")
+    # # warpPerspective : Applies a perspective transformation to an image.
+    # # params : src – input image, dst – output image that has the size dsize and the same type as src,
+    # # M – 3 x 3 transformation matrix.
+    # # dst(x,y) = ((m11.x + m12.y + m13)/(m31.x + m32.y + m33), (m21.x + m22.y + m23)/(m31.x + m32.y + m33))
 
+    # #getPerspective : Calculates a perspective transform from four pairs of the corresponding points.
+    # #src, dst
     M = cv2.getPerspectiveTransform(rect, dst)
     warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
 
     return warped
+
+###########
+
+
+def search_boundary_1(hp, T):
+    # t is the threshold for finding difference betweeen blank and characters
+    # vertical boundary
+    N = len(hp)
+    i = 0
+
+    while ~((hp[i] <= T) & (hp[i + 1] > T)) & (i < int(N / 2)):
+        i += 1
+
+    lower = 0 if i == int(N / 2) else i
+    i = N - 1
+
+    while ~((hp[i - 1] > T) & (hp[i] <= T)) & (i < N - 1):
+        i += 1
+
+    higher = i
+    return [lower, higher]
+

@@ -5,32 +5,75 @@ from recognise_and_work import localization
 from helpers import functions
 from recognise_and_work import recognize
 
-
+# # recognizes the frame
 def help_recognize(frame):
-    # blur the image to make all colors of the frame uniform
+    ## blur the image to make all colors of the frame uniform
 
     blur = cv2.GaussianBlur(frame, (9, 9), 0)
+    # #hue, saturation, value model, used to select various different colors needed for a particular picture
 
     hsv_img = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    # find only orange parts of the image
+    # #find only orange parts of the image
     light_orange = (15, 60, 50)
     dark_orange = (37, 255, 220)
+    # #masking happens -> from light orage to dark orange
+
+
+    ## inRange : Checks if array elements lie between the elements of two other arrays.
+    # #params, src is first input array, lower-bound inclusive, upper bound inclusive
+    ## return dst where dst[i[ = low[i] <= src[i] <= up[i]
     mask = cv2.inRange(hsv_img, light_orange, dark_orange)
+    ## bitwise_and : calculates the per-element bit-wise logical conjunction
+    # #Two arrays when src1 and src2 have the same size:
+    ## dst[i] = scr1[i] ^ scr2[i] if mask[i] != 0
     masked = cv2.bitwise_and(frame, frame, mask=mask)
+
     cv2.imshow("Masked", masked)
     cv2.waitKey(10)
     # convert hsv to gray
-
+    ## convert hsv to gray
     gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
-
+    ## binarisation of the image
     (thresh, binary) = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
+
+    ## threshold : Applies a fixed-level threshold to each array element.
+    ## params, src, threshold value, max value
+
+
+    # edge detection using canny algorithm
 
     edged = cv2.Canny(binary, 50, 100)
 
-    contours = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+   # # Canny : Finds edges in an image using the [Canny86] algorithm.
+    ## params, image, thesh_1, thresh_2
+    ## The smallest value between threshold1 and threshold2 is used for edge linking.
+    ## The largest value is used to find initial segments of strong edges.
+    ## canny algorithm works as following :
+    ## Apply Gaussian filter to smooth the image in order to remove the noise
+    ## Find the intensity gradients of the image (An image gradient is a
+    ## directional change in the intensity or color in an image)
+    ## Apply non-maximum suppression to get rid of spurious response to edge detection
+    ## NMS : transform a smooth response map that triggers many imprecise object
+    ## window hypotheses in, ideally, a single bounding-box for each detected object.
+    ## Apply double threshold to determine potential edges
+    ## Track edge by hysteresis: Finalize the detection of edges by suppressing all the other edges
+    ## that are weak and not connected to strong edges.
+    ## hysterisis: hysteresis compares two images to build an intermediate image. The function
+    ## takes two binary images that have been thresholded at different levels. The higher threshold
+    ## has a smaller population of white pixels. The values in the higher threshold are more likely to be real edges.
 
+    ## find contours of the image
+
+    contours = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+    ## findContours : Finds contours in a binary image.
+    ## params, image, mode, method
+    ## retr_tree retrieves all of the contours and reconstructs a full hierarchy of nested contours
+    ## chain_approx_none stores absolutely all the contour points. That is, any 2 subsequent points
+    ## (x1,y1) and (x2,y2) of the contour will be either horizontal, vertical or diagonal neighbors,
+    ## that is, max(abs(x1-x2),abs(y2-y1))==1.
     gray_original = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    ## the image and the contours are passed to the plate detection method
     plates = localization.plate_detection(gray_original, contours)
 
     if plates is not None:
@@ -67,6 +110,12 @@ def help_recognize(frame):
     else:
         plate_number = None
 
+    ## resize : Resizes an image.
+    ## params, image, dst_size, interpolation
+    ## inter_linar is a bilinear interpolation (used by default)
+    ## The function resize resizes the image src down to or up to the specified size. Note that the
+    ## initial dst type or size are not taken into account. Instead, the size and type are derived
+    ## from the src, dsize, fx, and fy
     return plate_number
 #
 # def helper(plate_image):
@@ -97,8 +146,10 @@ def help_recognize(frame):
 
 def start_video(file_path, sample_frequency, output_path):
     cap = cv2.VideoCapture(file_path)
+    ## define the fps and speed
     fps = 12
     speed = 0
+    ## this is where recognized plates will be added
     recognized_plates = []
     cap.set(cv2.CAP_PROP_POS_FRAMES, speed)
 

@@ -131,3 +131,41 @@ def segment_and_recognize(plate_img):
     plate_number = divide_characters(new_plate, horizontal_bounds)
 
     return plate_number
+
+
+#############
+def recognize_character_pixel(image):
+    score = np.zeros(28)
+    list_of_score = []
+
+    for number in range(1, 18):
+        character = cv2.imread("data/SameSizeLetters/" + str(number) + ".bmp", cv2.IMREAD_GRAYSCALE)
+        image = cv2.resize(image, (character.shape[0], character.shape[1]))
+        count = 0
+
+        for i in range(0, character.shape[0]):
+            for j in range(0, character.shape[1]):
+                for k in range(0, image.shape[0]):
+                    for l in range(0, image.shape[1]):
+                        if character[i][j] == image[k][l]:
+                            count += 1
+
+        list_of_score.append(count)
+        score[number - 1] = max(list_of_score)
+
+    for number in range(10):
+        character = cv2.imread("data/SameSizeNumbers/" + str(number) + ".bmp", cv2.IMREAD_GRAYSCALE)
+        image = cv2.resize(image, character.shape[0], character.shape[1])
+        count = 0
+
+        for i in range(0, character.shape[0]):
+            for j in range(0, character.shape[1]):
+                for k in range(0, image.shape[0]):
+                    for l in range(0, image.shape[1]):
+                        if character[i][j] == image[k][l]:
+                            count += 1
+
+        list_of_score.append(count)
+        score[number + 17] = max(list_of_score)
+
+    return functions.valuees[str(np.argmax(score))]
