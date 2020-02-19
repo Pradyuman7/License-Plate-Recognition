@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 from helpers import functions
+from helpers import help
 
 
 def seperate(image, bounds):
@@ -12,6 +13,10 @@ def seperate(image, bounds):
         character_image = image[:, bounds[i]:bounds[i + 1]]
         plate_number = plate_number + recognise_characters(character_image)
 
+    return make_plate_number(plate_number)
+
+
+def make_plate_number(plate_number):
     indexes = functions.dashes(plate_number, "-")
     N = len(indexes)
     M = len(plate_number)
@@ -28,7 +33,7 @@ def recognise_characters(image_part):
     score = np.zeros(28)
     curr = []
 
-    if width <= 98:
+    if width <= 95:
         for i in range(17):
             check = cv2.imread("data/SameSizeLetters/" + str(i + 1) + ".bmp", cv2.IMREAD_GRAYSCALE)
 
@@ -47,7 +52,7 @@ def recognise_characters(image_part):
             curr = []
 
         for i in range(10):
-            check = cv2.imread("data/SameSizeNumbers/" + str(i + 1) + ".bmp", cv2.IMREAD_GRAYSCALE)
+            check = cv2.imread("data/SameSizeNumbers/" + str(i) + ".bmp", cv2.IMREAD_GRAYSCALE)
 
             # bitwise_not : The function calculates per-element bit-wise inversion of the input array:
             # dst[i] = ~src[i]
@@ -81,11 +86,12 @@ def recognise_characters(image_part):
             # Two arrays when src1 and src2 have the same size:
             # dst[i] = src1[i] xor src2[i] if mask[i] != 0
 
-            curr.append(np.sum(cv2.bitwise_not(cv2.bitwise_xor(find, image_part))) / (image_part.shape[0] * width * 255))
+            curr.append(
+                np.sum(cv2.bitwise_not(cv2.bitwise_xor(find, image_part))) / (image_part.shape[0] * width * 255))
 
         score[27] = max(curr)
 
-        return functions.values[str(np.argmax(score))]
+        return help.values[str(np.argmax(score))]
 
     else:
         return ""
@@ -98,26 +104,33 @@ def recognition_segment(plate):
     plate = cv2.dilate(plate, kernel, iterations=1)
 
     hor = np.sum(plate, axis=1)
-    ver = functions.find_vertical_bounds(hor, 16800)
+    ver = help.boundary_2(hor, 16800)
 
     new_plate = plate[ver[0] + 1:ver[1]][:]
 
-    new_plate = cv2.resize(new_plate, (int(new_plate.shape[1] * (85 / new_plate.shape[0])), 85), interpolation=cv2.INTER_LINEAR)
+    new_plate = cv2.resize(new_plate, (int(new_plate.shape[1] * (85 / new_plate.shape[0])), 85),
+                           interpolation=cv2.INTER_LINEAR)
 
     sum = np.sum(new_plate, axis=0)
-    hor_b = functions.boundary_1(sum)
+    hor_b = help.boundary_1(sum)
 
     if len(hor_b) < 6:
-        return None
+        return
 
+    new_plate = make_boxes(new_plate, ver, hor_b, plate)
+    plate_number = seperate(new_plate, hor_b)
+
+    return plate_number
+
+
+def make_boxes(new_plate, ver, hor_b, plate):
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_GRAY2BGR)
 
     for b in ver:
-        plate = cv2.line(plate, (0, new_plate.shape[0] - b), (new_plate.shape[1], new_plate.shape[0] - b), (0, 0, 255), 2)
+        plate = cv2.line(plate, (0, new_plate.shape[0] - b), (new_plate.shape[1], new_plate.shape[0] - b), (0, 0, 255),2)
     for b in hor_b:
         new_plate = cv2.line(new_plate, (b, 0), (b, new_plate.shape[0]), (0, 0, 255), 2)
 
     new_plate = cv2.cvtColor(new_plate, cv2.COLOR_BGR2GRAY)
-    plate_number = seperate(new_plate, hor_b)
 
-    return plate_number
+    return new_plate

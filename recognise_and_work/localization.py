@@ -2,10 +2,10 @@ import cv2
 import numpy as np
 
 from helpers import functions
+from helpers import help
 
 
 # localise straight plates
-
 def localise_plates(image, contours):
     all_con = []
     i = 0
@@ -32,7 +32,7 @@ def do_warp(image, all_con):
     #     return warp_perspective_image(image, contour[0])
 
     for c in all_con:
-        plate.append(functions.warp_perspective(image, c))
+        plate.append(help.warp_perspective(image, c))
 
     return plate
 
@@ -71,5 +71,5 @@ def recognize_character_pixel(image):
         list_of_score.append(count)
         score[number + 17] = max(list_of_score)
 
-    return functions.valuees[str(np.argmax(score))]
+    return help.values[str(np.argmax(score))]
 
