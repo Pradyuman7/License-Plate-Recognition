@@ -3,6 +3,7 @@ import cv2
 
 
 def isodata_threshold(img):
+    # reference youtube video and wikipedia
     hist, bins = np.histogram(img.ravel(), 256, [0, 256])
     h = 1 / 8 * np.ones(8)
     hist = np.convolve(h, hist)[:256]
@@ -24,7 +25,7 @@ def isodata_threshold(img):
 
     t = [t0]
 
-    epsilon = 0.5
+    constant = 0.5
 
     ginf = np.arange(tmin, t[0])
     gsup = np.arange(t[0], tmax)
@@ -36,7 +37,7 @@ def isodata_threshold(img):
     t.append(int(np.average([m1, m2])))
     i = 1
 
-    while np.abs(t[i - 1] - t[i]) > epsilon:
+    while np.abs(t[i - 1] - t[i]) > constant:
         ginf = np.arange(tmin, t[i])
         gsup = np.arange(t[i], tmax)
         m1 = np.average(ginf, weights=hist[tmin:t[i]])
@@ -47,32 +48,20 @@ def isodata_threshold(img):
     return t[i]
 
 
-def create_bar_character(img_shape, bar_thickness, bar_width):
-    ch_height = img_shape[0] + 50
-    ch_width = img_shape[1]
-    bar = np.zeros((ch_height, ch_width), np.uint8)
-    bart_init = int(ch_height / 2) - int(bar_thickness / 2)
-    bart_end = bart_init + bar_thickness
-    barw_init = 0
-    barw_end = barw_init + bar_width
-    bar[bart_init:bart_end, barw_init:barw_end] = 255 * np.ones([bar_thickness, min((bar_width, ch_width))])
-    return bar
-
-
-def clean_borders(plate_image, epsilon):
+def remove(plate_image, constant):
     height = plate_image.shape[0]
     width = plate_image.shape[1]
 
-    plate_image[0:epsilon[0], :] = 0
-    plate_image[height - epsilon[0]:height, :] = 0
-    plate_image[:, 0:epsilon[1]] = 0
-    plate_image[:, width - epsilon[1]:width] = 0
+    plate_image[0:constant[0], :] = 0
+    plate_image[height - constant[0]:height, :] = 0
+    plate_image[:, 0:constant[1]] = 0
+    plate_image[:, width - constant[1]:width] = 0
 
     return plate_image
 
 
-def verify_plate(box):
-    rect = order_points(box)
+def check(box):
+    rect = rectagnle(box)
     (tl, tr, br, bl) = rect
 
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -92,7 +81,7 @@ def verify_plate(box):
     return (maxWidth > 100) and (aspect_ratio < 0.3) and (area > 2600)
 
 
-def order_points(pts):
+def rectagnle(pts):
     rect = np.zeros((4, 2), dtype="float32")
 
     s = pts.sum(axis=1)
@@ -106,7 +95,7 @@ def order_points(pts):
     return rect
 
 
-lookup_table = {
+values = {
     "0": "B", "1": "D", "2": "F", "3": "G", "4": "H",
     "5": "J", "6": "K", "7": "L", "8": "M", "9": "N",
     "10": "P", "11": "R", "12": "S", "13": "T", "14": "V",
@@ -131,7 +120,7 @@ def find_vertical_bounds(hp, T):
     return [inf_bound, sup_bound]
 
 
-def find_horizontal_bounds(vertical_projection):
+def boundary_1(vertical_projection):
     N = len(vertical_projection)
     bool_bounds = (vertical_projection >= 2000)
     start_ind = 0
@@ -157,21 +146,25 @@ def find_horizontal_bounds(vertical_projection):
     return bounds
 
 
-def find_all_indexes(input_str, search_str):
+def dashes(input, search):
     l1 = []
-    length = len(input_str)
+    length = len(input)
     index = 0
+
     while index < length:
-        i = input_str.find(search_str, index)
+        i = input.find(search, index)
+
         if i == -1:
             return l1
+
         l1.append(i)
         index = i + 1
+
     return l1
 
 
-def four_point_transform(image, pts):
-    rect = order_points(pts)
+def warp_perspective(image, pts):
+    rect = rectagnle(pts)
     (tl, tr, br, bl) = rect
 
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
